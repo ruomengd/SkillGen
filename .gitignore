@@ -1,1 +1,5 @@
 **/__pycache__/
+**/sampling/
+/data/alfworld/json_2.1.1/
+/data/alfworld/alfred.pddl
+/data/alfworld/alfred.twl2
