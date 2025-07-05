@@ -79,7 +79,7 @@ def load_dataset(script_args):
         raise ValueError(f"Unsupported dataset name: {script_args.dataset_name}")
 
     if script_args.debug:
-        dataset = dataset.select(0, 1)
+        dataset = dataset.select(0, 10)
 
     total_size = len(dataset)
     print(f"Total Dataset Size: {total_size}")

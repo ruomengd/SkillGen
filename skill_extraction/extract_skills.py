@@ -39,7 +39,7 @@ def main():
         for dataset_name in args.datasets:
             for fold_num in range(args.fold_count):
                 # Setup directories
-                save_dir = f"./skill_extraction/skills/{dataset_name}/{model_name}/sampling_count_{args.sampling_count}/fold_{fold_num}"
+                save_dir = f"./logs/skill_extraction/skills/{dataset_name}/{model_name}/sampling_count_{args.sampling_count}/fold_{fold_num}"
                 os.makedirs(save_dir, exist_ok=True)
                 print(f"Processing {save_dir}")
 

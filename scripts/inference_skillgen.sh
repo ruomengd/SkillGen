@@ -16,7 +16,7 @@ do
         do
         echo "Running inference with fold_num_id = ${fold_num_id}"
         CUDA_VISIBLE_DEVICES=${gpu} TOKENIZERS_PARALLELISM=false python inference_skillgen.py \
-            --save_path "./log/inference_${prompt_mode}" \
+            --save_path "./logs/inference_${prompt_mode}" \
             --dataset_name ${dataset} \
             --model_name ${model} \
             --max_steps ${max_steps} \

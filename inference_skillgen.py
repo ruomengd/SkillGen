@@ -55,7 +55,7 @@ def load_dataset(script_args):
     print('Load dataset.')
 
     if script_args.dataset_name == 'alfworld':
-        label_path = './data/%s/test.jsonl'%(script_args.dataset_name)
+        label_path = './data/%s/all.jsonl'%(script_args.dataset_name)
         data_path = './data/%s/test_data_%s.jsonl'%(script_args.dataset_name, script_args.fold_num)
         id_list = []
         with open(data_path, 'r', encoding='utf-8') as file:
@@ -65,7 +65,7 @@ def load_dataset(script_args):
         dataset = dataset_all.load_from_fold(id_list)
     
     elif script_args.dataset_name == 'babyai':
-        label_path = './data/%s/test.jsonl'%(script_args.dataset_name)
+        label_path = './data/%s/all.jsonl'%(script_args.dataset_name)
         data_path = './data/%s/test_data_%s.jsonl'%(script_args.dataset_name, script_args.fold_num)
         id_list = []
         with open(data_path, 'r', encoding='utf-8') as file:
@@ -114,11 +114,12 @@ def make_prompt(step, args, category, goal, history=None, prompt_dict=None, chec
         local_history = history[-hist_size:]
         hist_info = "\n".join([item[0] + ": " + item[1] for item in local_history])
 
-    if args.prompt_mode == 'demoac_skill_norm':
+    if args.prompt_mode == 'skillgen':
         # Load domain mapping and retrieve similar domains
-        domain_map_path = os.path.join('./domain_skills', f'{args.dataset_name}_retrieved_domains.jsonl')
+        domain_map_path = os.path.join('./logs/skill_extraction/segments', f'{args.dataset_name}_retrieved_domains.jsonl')
         domain_map = load_domain_map(domain_map_path)
         retrieved_category = query_domains(category, domain_map)
+        # print('retrieved_category', retrieved_category)
         
         # Combine original domain with retrieved ones, avoiding duplicates
         domains = [category]
@@ -127,7 +128,7 @@ def make_prompt(step, args, category, goal, history=None, prompt_dict=None, chec
         # Golden Segment
         # Construct path to domain segments file
         file_path = os.path.join(
-            'domain_segments',
+            './logs/skill_extraction/segments',
             args.dataset_name,
             args.model_name.split('/')[-1],
             f'count{args.sampling_count}',
@@ -168,32 +169,8 @@ def inference_step_from_api(model, entry, prompt_dict, args, retrieve_model=None
         # print(prompt)
         # input()
         outputs = generate_output_from_api(model, prompt, script_args=args)
+        action = extract_action(outputs)
         
-        ac = remove_number_prefix(outputs).lower()
-        ac = remove_parentheses_content(ac)
-        ac = ac.replace('*', '')
-
-        if 'action:' in ac.lower():
-            action = ac.lower().split('action:')[1].split('\n')[0].split(',')[0]
-        elif 'the recommended next action is to' in ac:
-            ac = ac.replace(':', '').strip()
-            action = ac.split('the recommended next action is to')[-1].split('\n')[0].split('.')[0].split(',')[0].strip()
-        elif 'the recommended next action is' in ac:
-            ac = ac.replace(':', '').strip()
-            action = ac.split('the recommended next action is')[-1].split('\n')[0].split('.')[0].split(',')[0].strip()
-        elif 'the next action is' in ac:
-            ac = ac.replace(':', '').strip()
-            action = ac.split('the next action is')[-1].split('\n')[0].split('.')[0].split(',')[0].strip()
-        elif 'next best action' in ac:
-            ac = ac.replace(':', '').strip()
-            action = ac.split('next best action')[-1].split('\n')[0].split('.')[0].split(',')[0].strip()
-        else:
-            ac = ac.replace(':', '').strip()
-            action = ac.split('\n')[0].split(',')[0]
-
-        action = action.split('--')[0].strip()
-        action = action.replace('.', '').strip()
-
         env = entry["env"]
         
         if args.dataset_name == 'alfworld' or args.dataset_name == 'sc':
@@ -239,39 +216,10 @@ def inference_step_from_local(model, tokenizer, entry, prompt_dict, args, retrie
 
     for step in range(args.max_steps):
         prompt = make_prompt(step=step, args=args, category=entry["task_name"], goal=entry["goal"], history=entry["trajectory"], prompt_dict=prompt_dict, query_id=query_id, retrieve_model=retrieve_model)
-        # print(prompt)
-        # input()
+        print(prompt)
+        input()
         outputs = generate_output_from_local(model, tokenizer, prompt, script_args=args)
-        print('------------------------------------')
-        print(outputs)
-        print('------------------------------------')
-        # input()
-
-
-        ac = remove_number_prefix(outputs).lower()
-        ac = remove_parentheses_content(ac)
-        ac = ac.replace('*', '')
-
-        if 'action:' in ac.lower():
-            action = ac.lower().split('action:')[1].split('\n')[0].split(',')[0]
-        elif 'the recommended next action is to' in ac:
-            ac = ac.replace(':', '').strip()
-            action = ac.split('the recommended next action is to')[-1].split('\n')[0].split('.')[0].split(',')[0].strip()
-        elif 'the recommended next action is' in ac:
-            ac = ac.replace(':', '').strip()
-            action = ac.split('the recommended next action is')[-1].split('\n')[0].split('.')[0].split(',')[0].strip()
-        elif 'the next action is' in ac:
-            ac = ac.replace(':', '').strip()
-            action = ac.split('the next action is')[-1].split('\n')[0].split('.')[0].split(',')[0].strip()
-        elif 'next best action' in ac:
-            ac = ac.replace(':', '').strip()
-            action = ac.split('next best action')[-1].split('\n')[0].split('.')[0].split(',')[0].strip()
-        else:
-            ac = ac.replace(':', '').strip()
-            action = ac.split('\n')[0].split(',')[0]
-
-        action = action.split('--')[0].strip()
-        action = action.replace('.', '').strip()
+        action = extract_action(outputs)
         
         
         env = entry["env"]
@@ -356,7 +304,7 @@ def generate_samples(script_args):
     with open(prompt_path, 'r') as f:
         prompt_dict = json.load(f)
 
-    if ['skillgen'] in script_args.prompt_mode:
+    if script_args.prompt_mode in ['skillgen']:
         retrieve_model = SentenceTransformer('all-MiniLM-L6-v2').to(script_args.device)  
         retrieve_model.eval() # Set model to evaluation mode
     else:
@@ -397,14 +345,16 @@ def generate_samples(script_args):
 
     # Handle local models
     else:
-        model = AutoModelForCausalLM.from_pretrained(
-            script_args.model_name,
-            torch_dtype="bfloat16"
-        ).to(script_args.device)
-        model.eval() # Set model to evaluation mode
+        # model = AutoModelForCausalLM.from_pretrained(
+        #     script_args.model_name,
+        #     torch_dtype="bfloat16"
+        # ).to(script_args.device)
+        # model.eval() # Set model to evaluation mode
         
-        tokenizer = AutoTokenizer.from_pretrained(script_args.model_name)
-        tokenizer.pad_token = tokenizer.eos_token
+        # tokenizer = AutoTokenizer.from_pretrained(script_args.model_name)
+        # tokenizer.pad_token = tokenizer.eos_token
+
+        model, tokenizer = None, None
 
         for data in tqdm(dataset, desc="Generating responses with local model"):
             sample = inference_step_from_local(

@@ -87,8 +87,7 @@ def skillgen_prompting(query_id, retrieved_category, query_hist, model, args, to
     graph_data = []
     for id in candidates:
         jsonl_path = os.path.join(
-            f'./domain_skills',
-            'extracted_rules_progress_stepwise_norm',
+            f'./logs/skill_extraction/skills',
             args.dataset_name,
             args.model_name.split('/')[-1],
             f'sampling_count_{args.sampling_count}',

@@ -12,6 +12,7 @@ import torch
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+from typing import List, Dict
 
 # Load variables from .env file
 load_dotenv()
@@ -91,21 +92,13 @@ def extract_res(dataset_name, count, model_name, id_list):
     """
     datalist = []
     model_name = model_name.split('/')[-1]
-    
+
     # Load data from files based on model type
-    if model_name in ['qwen-turbo', 'gpt-4o-mini']:
-        file_pattern = f'./results/result_sampling/{dataset_name}/act_{model_name}_temperature1.0_step10_1-shot_count{{}}.jsonl'
-        for c in range(count):
-            filename = file_pattern.format(c)
+    for c in range(count):
+        for fold in range(4):
+            filename =  f'./logs/sampling/{dataset_name}/{model_name}_step10_1-shot_sampling{c}_maxlen64_temp1.0_topp0.95_hist20_fold{fold}.jsonl'
             with open(filename, 'r', encoding='utf-8') as file:
                 datalist.extend([json.loads(line.strip()) for line in file])
-    else:
-        file_pattern = f'./results_sampling/sampling_count{{}}/{dataset_name}/{model_name}_temp1.0_step10_1-shot_fold{{}}.jsonl'
-        for c in range(count):
-            for fold in range(4):
-                filename = file_pattern.format(c, fold)
-                with open(filename, 'r', encoding='utf-8') as file:
-                    datalist.extend([json.loads(line.strip()) for line in file])
 
     print(f'Total trajectories loaded: {len(datalist)}')
 
@@ -307,3 +300,51 @@ def generate_output_from_local(model, tokenizer, prompt, script_args=None):
     # Decode and print
     response = tokenizer.decode(generated_ids, skip_special_tokens=True)
     return response.strip()
+
+
+
+def cosine_similarity(v1, v2):
+    return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+
+def load_embedding_jsonl(path: str) -> Dict[str, Dict]:
+    id_to_item = {}
+    with open(path, 'r', encoding='utf-8') as f:
+        for line in f:
+            item = json.loads(line.strip())
+            item['embedding'] = np.array(item['embedding'])
+            id_to_item[item['id']] = item
+    return id_to_item
+
+def extract_task_ids(obj):
+    task_ids = set()
+
+    def recurse(o):
+        if isinstance(o, dict):
+            for k, v in o.items():
+                if k == 'task_uid':
+                    task_ids.add(v)
+                recurse(v)
+        elif isinstance(o, list):
+            for item in o:
+                recurse(item)
+    recurse(obj)
+    return task_ids
+
+def extract_and_sort_by_task_id(data: dict, target_task_id: str):
+    matched_items = []
+
+    def recurse(obj):
+        if isinstance(obj, dict):
+            if obj.get('task_uid') == target_task_id and 'progress_rate' in obj:
+                matched_items.append(obj)
+            for v in obj.values():
+                recurse(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                recurse(item)
+
+    recurse(data)
+
+    # Sort by progress_rate
+    matched_items.sort(key=lambda x: x['progress_rate'], reverse=True)
+    return matched_items

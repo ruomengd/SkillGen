@@ -26,16 +26,39 @@ def add_current_node_embeddings(graph_data, model):
 
     return graph_data
 
-fold_count = 4
-model = SentenceTransformer('all-MiniLM-L6-v2')
-for dataset_name in ['alfworld', 'babyai', 'sc']:
-# for dataset_name in ['alfworld']:
-    for count in [6]:
-        for model_name in ['gpt-4o-mini', 'qwen-turbo', 'Qwen2.5-7B-Instruct']: # 'gpt-4o-mini', 'qwen-turbo', 'Qwen2.5-7B-Instruct', 
-        # for model_name in ['Qwen2.5-7B-Instruct']:
-            print(model_name)
-            for fold_num in range(fold_count):
-                save_dir = "./domain_rules_temp1.0/extracted_rules_progress_stepwise_weighting/%s/%s/sampling_count_%s/fold_%s"%(dataset_name, model_name, count, fold_num)
+
+
+import argparse
+import random
+import numpy as np
+# Set random seeds for reproducibility
+random.seed(42)
+np.random.seed(42)
+
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Extract skills from sampled trajectories')
+    parser.add_argument('--fold_count', type=int, default=4,
+                        help='Number of folds for cross validation')
+    parser.add_argument('--model_names', nargs='+', 
+                        default=['gpt-4o-mini', 'qwen-turbo', 'Qwen2.5-7B-Instruct'],
+                        help='List of model names to process')
+    parser.add_argument('--datasets', nargs='+',
+                        default=['alfworld', 'babyai', 'sc'],
+                        help='List of datasets to process') 
+    parser.add_argument('--sampling_count', type=int, default=6,
+                        help='Number of sampling used for skill extraction')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+    for model_name in args.model_names:
+        for dataset_name in args.datasets:
+            for fold_num in range(args.fold_count):
+                save_dir = "./logs/skill_extraction/skills/%s/%s/sampling_count_%s/fold_%s"%(dataset_name, model_name, args.sampling_count, fold_num)
                 # filtering by each fold, count the num of category
                 task_set, goal_dict = set(), dict()
                 fold_path = './data/%s/train_data_%s.jsonl'%(dataset_name, fold_num)
@@ -60,7 +83,6 @@ for dataset_name in ['alfworld', 'babyai', 'sc']:
 
                     with open('%s/%s.jsonl'%(save_dir, category_name)) as f:
                         graph_data = [json.loads(line) for line in f]
-                        
                 
                     # Add embeddings
                     updated_graph = add_current_node_embeddings(graph_data, model)
@@ -68,3 +90,7 @@ for dataset_name in ['alfworld', 'babyai', 'sc']:
                     with open('%s/%s_embed.jsonl'%(save_dir, category_name), "w") as f:
                         for item in updated_graph:
                             f.write(json.dumps(item) + "\n")
+
+
+if __name__ == "__main__":
+    main()

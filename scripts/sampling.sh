@@ -8,6 +8,7 @@ prompt_mode="1-shot"
 max_steps=10 
 max_length=64
 temperature=1.0
+top_p=0.95
 
 for dataset in "alfworld" "babyai" "sc"
 do
@@ -18,12 +19,13 @@ do
         echo "Running inference with fold_num_id = ${fold_num_id}"
         CUDA_VISIBLE_DEVICES=${gpu} TOKENIZERS_PARALLELISM=false python sampling.py \
             --prompt_mode ${prompt_mode} \
-            --save_path "./sampling" \
+            --save_path "./logs/sampling" \
             --dataset_name ${dataset} \
             --model_name ${model_name} \
             --max_steps ${max_steps} \
             --max_length ${max_length} \
             --temperature ${temperature} \
+            --top_p ${top_p} \
             --fold_num ${fold_num_id} \
             --device ${device} \
             --do_sample \
