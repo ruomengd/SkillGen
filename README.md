@@ -11,18 +11,18 @@ SkillGen is a framework for extracting, ranking, and reusing **step-wise domain 
 
 ```
 SkillGen/
-├── data/                # Datasets for supported environments
-├── dataset/             # Dataset loading and preprocessing scripts
-├── environment/         # Environment wrappers for AlfWorld, BabyAI, ScienceWorld
-├── logs/                # Output logs, extracted skills, embeddings, and results
-├── models/              # Pretrained LLMs (e.g., Qwen2.5-7B-Instruct)
-├── prompt/              # Prompt construction and skill prompting logic
-├── scripts/             # Shell scripts for running extraction, sampling, inference
-├── skill_extraction/    # Core skill extraction, embedding, and retrieval modules
-├── inference_skillgen.py# Main inference script for skill-based prompting
-├── sampling.py          # Script for trajectory sampling
-├── utils.py             # Utility functions
-└── README.md            # This file
+├── data/                 # Datasets for supported environments
+├── dataset/              # Dataset loading and preprocessing scripts
+├── environment/          # Environment wrappers for AlfWorld, BabyAI, ScienceWorld
+├── logs/                 # Output logs, extracted skills, embeddings, and results
+├── models/               # Pretrained LLMs (e.g., Qwen2.5-7B-Instruct)
+├── prompt/               # Prompt construction and skill prompting logic
+├── scripts/              # Shell scripts for running extraction, sampling, inference
+├── skill_extraction/     # Core skill extraction, embedding, and retrieval modules
+├── inference_skillgen.py # Main inference script for skill-based prompting
+├── sampling.py           # Script for trajectory sampling
+├── utils.py              # Utility functions
+└── README.md             # This file
 ```
 
 ## Installation
