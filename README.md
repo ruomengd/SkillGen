@@ -2,7 +2,7 @@
 
 ![Teaser](/assets/framework.jpg "Teaser")
 
-This repository contains code for the paper [SkillGen: Learning Domain Skills for In-Context Sequential Decision Making](https://arxiv.org/pdf/2511.14670) by Ruomeng Ding, Wei Cheng, Minglai Shao, and Chen Zhao.
+This repository contains code for the paper [SkillGen: Learning Domain Skills for In-Context Sequential Decision Making](https://arxiv.org/pdf/2511.14670) by Ruomeng Ding, Wei Cheng, Minglai Shao, and Chen Zhao. [AAAI 2026]
  
 SkillGen is a framework for extracting, ranking, and reusing **step-wise domain skills** to enhance the performance of large language models (LLMs) in complex multi-step decision-making tasks. It leverages trajectory sampling, TD-based credit assignment, and graph-based skill extraction to build structured prompts that guide LLMs more effectively than standard prompting strategies.
 
